@@ -1,0 +1,395 @@
+<html>
+	<head>
+		<title>LED Brightness-Matching Calculator</title>
+		<script>
+// Luminous efficacy
+var luminous_efficacy = [
+	// WL  Photopic  Scotopic
+	[ 380, 0.000039, 0.000589 ],
+	[ 390, 0.00012 , 0.002209 ],
+	[ 390, 0.00012 , 0.002209 ],
+	[ 400, 0.000396, 0.00929  ],
+	[ 410, 0.00121 , 0.03484  ],
+	[ 420, 0.004   , 0.0966   ],
+	[ 430, 0.0116  , 0.1998   ],
+	[ 440, 0.023   , 0.3281   ],
+	[ 450, 0.038   , 0.455    ],
+	[ 460, 0.06    , 0.567    ],
+	[ 470, 0.09098 , 0.676    ],
+	[ 480, 0.13902 , 0.793    ],
+	[ 490, 0.20802 , 0.904    ],
+	[ 500, 0.323   , 0.982    ],
+	[ 507, 0.44431 , 1        ],
+	[ 510, 0.503   , 0.997    ],
+	[ 520, 0.71    , 0.935    ],
+	[ 530, 0.862   , 0.811    ],
+	[ 540, 0.954   , 0.655    ],
+	[ 550, 0.99495 , 0.481    ],
+	[ 555, 1       , 0.402    ],
+	[ 560, 0.995   , 0.3288   ],
+	[ 570, 0.952   , 0.2076   ],
+	[ 580, 0.87    , 0.1212   ],
+	[ 590, 0.757   , 0.0655   ],
+	[ 600, 0.631   , 0.03315  ],
+	[ 610, 0.503   , 0.01593  ],
+	[ 620, 0.381   , 0.00737  ],
+	[ 630, 0.265   , 0.003335 ],
+	[ 640, 0.175   , 0.001497 ],
+	[ 650, 0.107   , 0.000677 ],
+	[ 660, 0.061   , 0.000313 ],
+	[ 670, 0.032   , 0.000148 ],
+	[ 680, 0.017   , 0.000072 ],
+	[ 690, 0.00821 , 0.000035 ],
+	[ 700, 0.004102, 0.000018 ],
+	[ 710, 0.002091, 0.000009 ],
+	[ 720, 0.001047, 0.000005 ],
+	[ 730, 0.00052 , 0.000003 ],
+	[ 740, 0.000249, 0.000001 ],
+	[ 750, 0.00012 , 0.000001 ],
+	[ 760, 0.00006 , 0        ],
+	[ 770, 0.00003 , 0        ],
+];
+
+var e12_tab = [
+	100, 120, 150, 180, 220, 270, 330, 390, 470, 560, 680, 820
+];
+
+var e24_tab = [
+	100, 110, 120, 130, 150, 160, 180, 200, 220, 240, 270, 300,
+	330, 360, 390, 430, 470, 510, 560, 620, 680, 750, 820, 910
+];
+
+var e48_tab = [
+	100, 105, 110, 115, 121, 127, 133, 140, 147, 154, 162, 169, 178, 187, 196, 205,
+	215, 226, 237, 249, 261, 274, 287, 301, 316, 332, 348, 365, 383, 402, 422, 442,
+	464, 487, 511, 536, 562, 590, 619, 649, 681, 715, 750, 787, 825, 866, 909, 953
+];
+
+var e96_tab = [
+	100, 102, 105, 107, 110, 113, 115, 118, 121, 124, 127, 130, 133, 137, 140, 143,
+	147, 150, 154, 158, 162, 165, 169, 174, 178, 182, 187, 191, 196, 200, 205, 210,
+	216, 221, 226, 232, 237, 243, 249, 255, 261, 267, 274, 280, 287, 294, 301, 309,
+	316, 324, 332, 340, 348, 357, 365, 374, 383, 392, 402, 412, 422, 432, 442, 453,
+	464, 475, 487, 499, 511, 523, 536, 549, 562, 576, 590, 604, 619, 634, 649, 665,
+	681, 698, 715, 732, 750, 768, 787, 806, 825, 845, 866, 887, 909, 931, 953, 976
+];
+
+// Wavelength names
+var wln_tab = [
+	[ 400, "Violet" ],
+	[ 425, "Indigo" ],
+	[ 470, "Blue"   ],
+	[ 550, "Green"  ],
+	[ 600, "Yellow" ],
+	[ 630, "Orange" ],
+	[ 665, "Red"    ]
+];
+
+// Names of wavelengths, for reference
+var wavelength_names = [
+	[ 770, "Invisible"    ],
+	[ 760, "Infrared"     ],
+	[ 720, "Deep Red"     ],
+	[ 610, "Red"          ],
+	[ 590, "Orange"       ],
+	[ 580, "Yellow"       ],
+	[ 560, "Yellow-Green" ],
+	[ 515, "Green"        ],
+	[ 485, "Blue-Green"   ],
+	[ 450, "Blue"         ],
+	[ 400, "Indigo"       ],
+	[ 380, "Ultraviolet"  ],
+	[   0, "Invisible"    ],
+];
+
+// Resistor series Exx table
+var exx_tab = [ e12_tab, e24_tab, e48_tab, e96_tab ];
+
+function elmById(id, single = false) {
+	e = document.querySelectorAll("[id='"+id+"']");
+	return single ? e[0] : e;
+}
+
+function floatById(id, single = false) {
+	f = Array.from(elmById(id)).map(e => parseFloat(e.value));
+	return single ? f[0] : f;
+}
+
+function radioByName(name) {
+	return parseInt(Array.from(document.getElementsByName(name)).find((e) => e.checked).value);
+}
+
+function expandResistors(idx) {
+	let resistors = [];
+	if(idx < exx_tab.length) {
+		for(let f = 0; f < 6; f++) {
+			for(let n = 0; n < exx_tab[idx].length; n++) {
+				let str = exx_tab[idx][n].toFixed(0);
+				resistors.push([
+					exx_tab[idx][n] * Math.pow(10, f) / 100,
+					((f % 3) == 2 ? str : str.slice(0, (f % 3) + 1) + "." + str.slice((f % 3) + 1)) + (f > 2 ? (f > 5 ? "M" : "k") : "")
+				]);
+			}
+		}
+	}
+	return resistors;
+}
+
+function test() {
+	// Fetch all necessary fields
+	let io = [ floatById("cd"), floatById("ma"), floatById("nm"), floatById("vf"), elmById("cn"), elmById("ro"), elmById("be"), elmById("fi") ];
+
+	// Map to objects for readability, iterate
+	io = io[0].map((_, idx) => ({
+		intensity:       io[0][idx],
+		current:         io[1][idx],
+		wavelength:      io[2][idx],
+		voltage:         io[3][idx],
+		colourName:      io[4][idx],
+		resistorValue:   io[5][idx],
+		brightnessError: io[6][idx],
+		finalCurrent:    io[7][idx],
+		efficacy:        0,
+		brightness:      0
+	}))
+
+	// Fetch desired configuration
+	let cfg = {
+		current:   floatById("nma", true),
+		voltage:   floatById("uvs", true),
+		resistors: expandResistors(radioByName("cs"))
+	};
+	
+	// Filter out uncalculables and while at it, print color name and calculate efficacy
+	io = io.filter(io => {
+		// Determine color name from wavelength
+		let name = "Invisible";
+		try {
+			name = wavelength_names.find(a => io.wavelength > a[0])[1];
+		} catch(e) {};
+		io.colourName.innerHTML = name;
+		
+		// Determine luminous efficacy from interpolated lookup table
+		let idx = luminous_efficacy.findIndex(a => io.wavelength < a[0]);
+		
+		// Check that we have a wavelength we can calculate
+		if(name != "Invisible" && idx > 0) {
+			// Calculate efficacy using linear interpolation from the table
+			let a = luminous_efficacy[idx - 1];
+			let b = luminous_efficacy[idx - 0];
+			io.efficacy = (io.wavelength - a[0]) * (b[1] - a[1]) / (b[0] - a[0]) + a[1];
+			return true;
+		}
+		
+		// Clear calculations
+		io.resistorValue.innerHTML = io.brightnessError.innerHTML = "";
+	});
+	
+	
+	
+	// Calculate brightness
+	let brightness_min;
+	io.forEach(io => {
+		// Normalize intensity to 1mA
+		io.intensity /= io.current;
+		
+		// Calculate brightness based on efficacy
+		io.brightness = io.intensity * io.efficacy;
+		
+		// Find the highest brightness
+		brightness_min = brightness_min ? Math.min(brightness_min, io.brightness) : io.brightness;
+	});
+
+	io.forEach(io => {
+		// Calculate required current 
+		io.current = cfg.current / (io.brightness / brightness_min);
+		
+		// Calculate optimal resistor
+		let resistance = (cfg.voltage - io.voltage) / (io.current / 1000);
+		
+		// Find best matching resistor
+		let resistor = [ resistance, resistance.toFixed(0) ];
+		if(cfg.resistors.length) resistor = cfg.resistors.reduce((a, b) => Math.abs(b[0] - resistance) < Math.abs(a[0] - resistance) ? b : a);
+		io.resistorValue.innerHTML = resistor[1];
+		
+		// Calculate current with matching resistor
+		let current = (cfg.voltage - io.voltage) / resistor[0];
+		io.finalCurrent.innerHTML = (current * 1000).toFixed(1);
+		
+		// Calculate current error
+		let error = (1.0 - (current / (io.current / 1000))) * 100;
+		io.brightnessError.innerHTML = (error < 0 ? "-" : "+") + Math.abs(error).toFixed(1);
+		
+	});
+}
+
+function remove_led(e) {
+	e.target.parentNode.parentNode.remove();
+}
+
+function add_led(values=["","","",""]) {
+	let table = document.getElementById("led_table");
+	let row = table.insertRow(table.rows.length - 1);
+	//row.attachEvent("onmouseover", show_extra);
+	for(let n = 0; n < 4; n++) {
+		let cell = row.insertCell(n);
+		let i = document.createElement("input");
+		i.type = "text"; i.id = ["nm", "cd", "ma", "vf"][n]; i.value = values[n];
+		cell.appendChild(i);
+	}
+	for(let n = 4; n < 8; n++) {
+		let cell = row.insertCell(n);
+		cell.id = ["cn", "ro", "fi", "be"][n - 4];
+	}
+	let cell = row.insertCell(8);
+	let i = document.createElement("button");
+	i.innerHTML = "Remove"
+	i.style.width = "75px";
+	i.id = "rr";
+	//i.style.visibility = "hidden";
+	cell.appendChild(i);
+	i.addEventListener("click", remove_led);
+}
+
+function clear_led() {
+	let removers = elmById("rr");
+	for(let n = 0; n < removers.length; n++) {
+		removers[n].dispatchEvent(new Event('click'));
+	}
+	add_led();
+}
+		</script>
+		<style>
+			body {
+				margin:10px;
+			}
+			.topic {
+				position:relative;
+				left:-10px;
+				top:-10px;
+				width:100%;
+				padding: 12px 15px;
+				margin-bottom:15px;
+				font-size: 1.2em;
+				font-family: sans-serif;
+				font-weight: bold;
+				min-width: 400px;
+				box-shadow: 0 0 20px rgba(0, 0, 0, 0.55);
+				background-color: #009879;
+				color: #ffffff;
+
+			}
+			input[type=text] {
+				width:110px;
+				font-size: 0.9em;
+				font-family: sans-serif;
+			}
+			button {
+				width:110px;
+				font-size: 0.9em;
+				font-family: sans-serif;
+			}
+			input[type="radio"] {
+				margin-top: -2px;
+				vertical-align: middle;
+			}
+			.out {
+				width:50px;
+				border: 1px #cccccc solid;
+				height:20px;
+				display:inline-block;
+				vertical-align: absmiddle;
+			}
+			
+			.styled-table {
+				border-collapse: collapse;
+				margin: 25px 0;
+				font-size: 0.9em;
+				font-family: sans-serif;
+				min-width: 400px;
+				box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+			}
+			.styled-table thead tr {
+				background-color: #009879;
+				color: #ffffff;
+				text-align: left;
+				font-weight: bold;
+				
+			}
+			.styled-table th,
+			.styled-table td {
+				padding: 6px 15px;
+			}
+			.styled-table thead tr {
+				padding: 12px 15px;
+			}
+			.styled-table tbody tr {
+				border-bottom: 1px solid #dddddd;
+			}
+
+			.styled-table tbody tr:nth-of-type(even) {
+				background-color: #f3f3f3;
+			}
+
+			.styled-table tbody tr:last-of-type {
+				border-bottom: 2px solid #009879;
+			}
+			.styled-table tbody tr.active-row {
+				font-weight: bold;
+				color: #009879;
+			}
+			.styled-table .result {
+				background-color: #007998;
+			}
+		</style>
+	</head>
+	<body onload="add_led(['590','550','20','2.0']); add_led(['525','1600','20','3.2']); add_led(['625','530','20','2.0']); document.addEventListener('input', test); test();" xonload="add_led(['573','220','20','1.3']); add_led(['589','560','20','1.3']); add_led(['626','560','20','1.3']); document.addEventListener('input', test); test();">
+
+		<div class="topic">LED Brightness-Matching Calculator</div>
+	
+		This <b>LED calculator</b> will help you calculate the currents and resistor values you will need to brightness-match LEDs of <i>different colors</i>.<br/><br/>
+		For example, you might be building a panel with multiple color indicators and you want their <b>perceived brightness</b> to be the same, or you are wiring up an RGB LED for white light.<br/><br/>
+		Results are calculated based on the specified LED parameters and the photopic luminous efficacy for the specified LED wavelength and matched to the selected resistor series.<br/>
+		Since the exact spectrum and the current vs. intensity curve of the LED are not known, these values should be treated as <b>indicative and not final</b>.<br/>
+		Best results are achieved when targetting currents at or near the rated current and <vb>results will likely require fine tuning</b> to get just right.<br/>.<br/>
+		An example is prefilled when loading, <b>please press "Clear" to start from scratch</b><br/>
+	
+		<table id="config_table" class="styled-table">
+			<thead>
+				<tr>
+					<td>Source Voltage <i>V</i></td>
+					<td>Target Current <i>mA</i></td>
+					<td>Resistor Series</td>
+				</tr>
+			</thead>
+			<tr>
+				<tr>
+					<td><input type="text" id="uvs" value="5.0"/></td>
+					<td><input type="text" id="nma" value="10"/></td>
+					<td><input type="radio" name="cs" value="0"> E12 <input type="radio" name="cs" value="1" checked> E24 <input type="radio" name="cs" value="2"> E48 <input type="radio" name="cs" value="3"> E96 <input type="radio" name="cs" value="4"> Exact</td>
+				</tr>
+			</tr>
+		</table>
+		
+		<table id="led_table" class="styled-table">
+			<thead>
+				<tr>
+					<!--td>#</td-->
+					<td>Wavelength <i>nm</i></td>
+					<td>Intensity <i>mcd</i></td>
+					<td>at Current <i>mA</i></td>
+					<td>Voltage (V<sub>F</sub>) <i>V</i></td>
+					<td class="result">Color</td>
+					<td class="result">Resistor <i>Ω</i></td>
+					<td class="result">Current <i>mA</i></td>
+					<td class="result">Error <i>%</i></td>
+					<td class="result"></td>
+				</tr>
+			</thead>
+			<tr>
+				<td colspan="8"><button onclick="add_led()">Add LED</button></td>
+				<td colspan="8"><button onclick="clear_led()" style="width:75px">Clear</button></td>
+			</tr>
+		</table>
+	</body>
+</html>
