@@ -62,6 +62,7 @@ function expandResistors(idx) {
 }
 
 function calculate() {
+
 	// Fetch all necessary fields
 	let io = [ floatById("cd"), floatById("ma"), floatById("vf"), elmById("cn"), elmById("ro"), elmById("be"), elmById("fc"), elmById("fi") ];
 
@@ -81,10 +82,14 @@ function calculate() {
 
 	// Fetch desired configuration
 	let cfg = {
-		current:   floatById("nma", true),
-		voltage:   floatById("uvs", true),
-		resistors: expandResistors(radioByName("cs"))
+		target:    floatById("tv", true),
+		voltage:   floatById("sv", true),
+		resistors: expandResistors(radioByName("cs")),
+		mode:      radioByName("tm")
 	};
+
+	// Update labels
+	let table = elmById("config_table")[0].rows[0].cells[2].innerHTML = "Target " + (cfg.mode ? "Intensity <i>mcd</i>" : "Current <i>mA</i>");
 		
 	// Calculate brightness
 	let brightness_min;
@@ -97,7 +102,7 @@ function calculate() {
 
 	io.forEach(io => {
 		// Calculate required current
-		let current = cfg.current / (io.brightness / brightness_min);
+		let current = cfg.mode ? cfg.target / io.intensity * io.current : cfg.target / (io.brightness / brightness_min);
 		// Calculate optimal resistor
 		let resistance = (cfg.voltage - io.voltage) / (current / 1000);
 		// Find best matching resistor
@@ -138,7 +143,7 @@ function hide_remove(e) {
 }
 
 function add_led(values=["","","",""]) {
-	let table = document.getElementById("led_table");
+	let table = elmById("led_table")[0];
 	let row = table.insertRow(table.rows.length - 1);
 	row.addEventListener("mouseover", show_remove);
 	row.addEventListener("mouseout", hide_remove);
@@ -284,14 +289,16 @@ function init() {
 			<thead>
 				<tr>
 					<td>Source Voltage <i>V</i></td>
-					<td>Target Current <i>mA</i></td>
+					<td>Target</td>
+					<td>Target Intensity <i>mcd</i></td>
 					<td>Resistor Series</td>
 				</tr>
 			</thead>
 			<tr>
 				<tr>
-					<td><input type="text" id="uvs" value="5.0"/></td>
-					<td><input type="text" id="nma" value="1"/></td>
+					<td><input type="text" id="sv" value="5.0"/></td>
+					<td><input type="radio" name="tm" value="0"> Current <input type="radio" name="tm" value="1" checked> Intensity
+					<td><input type="text" id="tv" value="25"/></td>
 					<td><input type="radio" name="cs" value="0"> E12 <input type="radio" name="cs" value="1" checked> E24 <input type="radio" name="cs" value="2"> E48 <input type="radio" name="cs" value="3"> E96 <input type="radio" name="cs" value="4"> Exact</td>
 				</tr>
 			</tr>
