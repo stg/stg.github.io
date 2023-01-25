@@ -280,9 +280,10 @@ function init() {
 	
 		This <b>LED calculator</b> will help you calculate the currents and resistor values you will need to brightness-match LEDs of <i>different colors</i>.<br/><br/>
 		For example, you might be building a panel with multiple color indicators and you want their <b>perceived brightness</b> to be the same, or you are wiring up an RGB LED for white light.<br/><br/>
-		Results are calculated based on the specified LED parameters and the photopic luminous efficacy for the specified LED wavelength and matched to the selected resistor series.<br/>
-		Since the exact spectrum and the current vs. intensity curve of the LED are not known, these values should be treated as <b>indicative and not final</b>.<br/>
-		Best results are achieved when targetting currents at or near the rated current and <vb>results will likely require fine tuning</b> to get just right.<br/>.<br/>
+		Results are calculated based on the specified LED parameters in relation to the target (max) current or intensity (brightness).<br/>
+		Since the current vs. intensity curve of the LEDs are not known and manufacturers differ, these values should be treated as <b>indicative and not final</b>.<br/>
+		Best results are achieved when targetting currents at or near the rated current and using LEDs with similar optical characteristics<br/>
+		<vb>Results may still require fine tuning</b> to get perfect.<br/>.<br/>
 		An example is prefilled when loading, <b>please press "Clear" to start from scratch</b><br/>
 	
 		<table id="config_table" class="styled-table">
