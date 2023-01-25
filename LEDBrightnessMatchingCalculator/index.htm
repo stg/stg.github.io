@@ -283,9 +283,9 @@ function init() {
 		Results are calculated based on the specified LED parameters in relation to the target (max) current or intensity (brightness).<br/>
 		Since the current vs. intensity curve of the LEDs are not known and manufacturers differ, these values should be treated as <b>indicative and not final</b>.<br/>
 		Best results are achieved when targetting currents at or near the rated current and using LEDs with similar optical characteristics<br/>
-		<vb>Results may still require fine tuning</b> to get perfect.<br/>.<br/>
-		An example is prefilled when loading, <b>please press "Clear" to start from scratch</b><br/>
-	
+		<b>Results may still require fine tuning</b> to get perfect.<br/>.<br/>
+		An example is prefilled when loading, <b>please press "Clear" to start from scratch</b><br/><br/>
+			
 		<table id="config_table" class="styled-table">
 			<thead>
 				<tr>
@@ -325,5 +325,40 @@ function init() {
 				<td colspan="8"><button onclick="clear_led()" style="width:75px">Clear</button></td>
 			</tr>
 		</table>
+
+		In this calculator I am, somewhat unscientifically, using <b>intensity</b> (referring to <b>luminous intensity</b>) and (perceived) <b>brightness</b> interchangably.<br/>
+		It is designed primarily for LEDs being viewed directly (not used for illumination) and in this case it makes little sense to speak of brightnessd and intensity separately.<br/>
+		When used for illumination, surface and ambient conditions would have a large effect on the perceived <b>brightness</b> and <b>intensity</b> and thus, they may diverge significantly.<br/><br/>
+		
+		Some notes on terminology, LEDs and units:<br/><br/>
+		<b>Photometry</b> is the science of measurement of light in terms of how it is <u>perceived by the average human eye</u>.<br/>
+		&emsp;Such measurements are called <i>photometric</i> as opposed to <i>radiometric</i>, which instead represents actual, physical, energies.<br/><br/>
+		
+		<b>Brightness</b> is the <u>perception</u> elicited by the <i>luminance</i> of a visual target, meaning it is a <i>photometric</i> measurement.<br/>
+		&emsp;This is a measure of what is perceived by an average human, regardless of other factors.<br/><br/>
+		
+		<b>Luminance</b> is the <i>photometric</i> measure of the <i>luminous intensity</i> per unit <u>area</u> of light in a given direction.<br/>
+		&emsp;This means it can represent the light reflected off a surface, but also light in transit across an area.<br/><br/>
+		
+		<b>Luminous intensity</b> - the <u>wavelength weighted</u> (ie. <i>photometric</i>) power emitted by a light source <u>in a particular direction</u>.<br/>
+		&emsp;This says nothing about the total amount of light, only how much is travelling in one specific direction.<br/><br/>
+		
+		<b>Candela</b> is the SI unit used to specify <i>luminous intensity</i>.<br/>
+		&emsp;It is thus <i>photometric</i>, and measured <u>in a particular direction</u>.<br/><br/>
+		
+		LEDs are, by industry standard, specified in <i>candela</i> (<i>cd</i>), commonly <i>millicandela</i> (<i>mcd</i>) for small LEDs.<br/>
+		Since <i>candela</i> is <i>photometric</i>, no such rating is provided for invisible light LEDs, such as infra-red, ultra-violet or beyond.<br/>
+		
+		The direction chosen for the <i>luminous intensity</i> measurement is usually where it is the highest, the <u>peak</u> intensity.<br/>
+		This direction is typically the <u>dead-center</u> of the intended direction for light emission.<br/><br/>
+		The <u>viewing angle</u> specification tells you the number of degrees between the directions where <i>luminous intensity</i> is at <u>50%</u> of the specification.<br/><br/>
+		
+		This means that any given LED light source will have a <u>higher candela</u> rating, if provided with a lens to produce a <u>narrower viewing angle</u>.<br/>
+		A <u>wider viewing angle</u> will subsequently result in a <u>lower candela</u> rating, even though the total amount of light emitted remains the same.<br/><br/>
+		
+		As such, <i>luminous intensity</i> is not a great measurement for illumination purposes, where the total amount of light provided is of high concern.<br/>
+		When dealing with illuminating LEDs, LED modules or LED fixtures, the SI unit <i>lumen</i>, a measurement of <i>luminous flux</i>, is typically used instead.<br/><br/>
+		For invisible light LEDs or LEDs designed for non-viewing purposes, the SI unit <i>watt</i>, a measurement of <i>radiant power/flux/energy</i>, is typically used.<br/><br/>
+			
 	</body>
 </html>
