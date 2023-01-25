@@ -131,22 +131,31 @@ function calculate() {
 
 function remove_led(e) {
 	// Remove the associated row from the table
-	e.target.parentNode.parentNode.remove();
+	e.currentTarget.parentNode.parentNode.remove();
+	if(elmById("led_table")[0].rows.length == 2) {
+		// Add an empty line to start fresh with
+		add_led();
+	}
 }
 
+// Show remove button
 function show_remove(e) {
 	e.currentTarget.cells[8].children[0].style.opacity=1;
 }
 
+// Hide remove button
 function hide_remove(e) {
 	e.currentTarget.cells[8].children[0].style.opacity=0;
 }
 
+// Add a new led row
 function add_led(values=["","","",""]) {
 	let table = elmById("led_table")[0];
+	// Add the row
 	let row = table.insertRow(table.rows.length - 1);
 	row.addEventListener("mouseover", show_remove);
 	row.addEventListener("mouseout", hide_remove);
+	// Add the inputs
 	for(let n = 0; n < 4; n++) {
 		let cell = row.insertCell(n);
 		let i = document.createElement("input");
@@ -154,10 +163,12 @@ function add_led(values=["","","",""]) {
 		cell.appendChild(i);
 		
 	}
+	// Add the outputs
 	for(let n = 4; n < 8; n++) {
 		let cell = row.insertCell(n);
 		cell.id = ["ro", "fc", "fi", "be"][n - 4];
 	}
+	// Add the remove button
 	let cell = row.insertCell(8);
 	let i = document.createElement("button");
 	i.innerHTML = "Remove"
