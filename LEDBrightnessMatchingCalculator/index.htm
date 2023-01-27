@@ -53,7 +53,7 @@ function expandResistors(idx) {
 				let str = exx_tab[idx][n].toFixed(0);
 				resistors.push([
 					exx_tab[idx][n] * Math.pow(10, f) / 100,
-					((f % 3) == 2 ? str : str.slice(0, (f % 3) + 1) + "." + str.slice((f % 3) + 1)) + (f > 2 ? (f > 5 ? "M" : "k") : "")
+					(((f % 3) == 2 ? str : str.slice(0, (f % 3) + 1) + "." + str.slice((f % 3) + 1))).substr(0, idx < 2 ? 3 : 4) + (f > 2 ? (f > 5 ? "M" : "k") : "") + " " + ["10%", "5%", "2%", "1%"][idx]
 				]);
 			}
 		}
@@ -77,7 +77,6 @@ function calculate() {
 		finalCurrent:    io[6][idx],
 		finalIntensity:  io[7][idx],
 		brightness:      0,
-		error:           0
 	}))
 
 	// Fetch desired configuration
@@ -95,11 +94,18 @@ function calculate() {
 	let brightness_min;
 	io.forEach(io => {
 		// Normalize brightness from intensity and current
-		io.brightness = io.intensity / io.current;
-		// Find the highest brightness
+		io.brightness = io.intensity / io.current; // brightness in mcd/ma
+		// Find the lowest brightness
 		brightness_min = brightness_min ? Math.min(brightness_min, io.brightness) : io.brightness;
 	});
 
+	// Sums
+	sums = {
+		error:     0,
+		intensity: 0,
+		current:   0,
+	};
+	
 	io.forEach(io => {
 		// Calculate required current
 		let current = cfg.mode ? cfg.target / io.intensity * io.current : cfg.target / (io.brightness / brightness_min);
@@ -113,19 +119,32 @@ function calculate() {
 		let final_current = (cfg.voltage - io.voltage) / resistor[0];
 		io.finalCurrent.innerHTML = (final_current * 1000).toFixed(2);
 		// Calculate final intensity
-		io.finalIntensity.innerHTML = (final_current / (io.current / 1000) * io.intensity).toFixed(1);
+		let final_intensity = (final_current / (io.current / 1000) * io.intensity);
+		io.finalIntensity.innerHTML = final_intensity.toFixed(1);
 		// Calculate current error
-		io.error = (1.0 - ((current / 1000) / final_current)) * 100;
+		let error = (1.0 - ((current) / (final_current * 1000))) * 100;
+		io.intensityError.innerHTML = (error < 0 ? "-" : "+") + Math.abs(error).toFixed(1) + "%";
+		// Add sums
+		sums.error     += Math.abs(error);
+		sums.intensity += final_intensity;
+		sums.current   += final_current * 1000;
 	});
 
 	// Calculate average error
-	let average_error = io.map(e => e.error).reduce((a, b) => a + b) / io.length;
+	let average_error = io.map(e => e.error).reduce((a, b) => Math.abs(a) + b) / io.length;
 
+	elmById("al")[0].innerHTML = "<i>Average:</i>";
+	elmById("ac")[0].innerHTML = (sums.current / io.length).toFixed(2);
+	elmById("ai")[0].innerHTML = (sums.intensity / io.length).toFixed(1);
+	elmById("ae")[0].innerHTML = "±" + (sums.error / io.length).toFixed(1) + "%";
+	/*
 	io.forEach(io => {
 		// Calculate required current
 		let error = io.error - average_error;
 		io.intensityError.innerHTML = (error < 0 ? "-" : "+") + Math.abs(error).toFixed(1);
+		//io.intensityError.innerHTML = ;
 	});
+	*/
 
 }
 
@@ -135,6 +154,12 @@ function remove_led(e) {
 	if(elmById("led_table")[0].rows.length == 2) {
 		// Add an empty line to start fresh with
 		add_led();
+		elmById("al")[0].innerHTML = "";
+		elmById("ac")[0].innerHTML = "";
+        elmById("ai")[0].innerHTML = "";
+		elmById("ae")[0].innerHTML = "";
+	} else {
+		calculate();
 	}
 }
 
@@ -185,8 +210,6 @@ function clear_led() {
 	for(let n = 0; n < removers.length; n++) {
 		removers[n].dispatchEvent(new Event('click'));
 	}
-	// Add an empty line to start fresh with
-	add_led();
 }
 
 function init() {
@@ -309,7 +332,7 @@ function init() {
 			<tr>
 				<tr>
 					<td><input type="text" id="sv" value="5.0"/></td>
-					<td><input type="radio" name="tm" value="0"> Current <input type="radio" name="tm" value="1" checked> Intensity
+					<td><input type="radio" name="tm" value="0"> Current (max) <input type="radio" name="tm" value="1" checked> Intensity
 					<td><input type="text" id="tv" value="25"/></td>
 					<td><input type="radio" name="cs" value="0"> E12 <input type="radio" name="cs" value="1"> E24 <input type="radio" name="cs" value="2" checked> E48 <input type="radio" name="cs" value="3"> E96 <input type="radio" name="cs" value="4"> Exact</td>
 				</tr>
@@ -327,13 +350,17 @@ function init() {
 					<td class="result">Resistor <i>Ω</i></td>
 					<td class="result">Current <i>mA</i></td>
 					<td class="result">Intensity <i>mcd</i></td>
-					<td class="result">Error <i>%</i></td>
+					<td class="result">Error</td>
 					<td class="result"></td>
 				</tr>
 			</thead>
 			<tr>
-				<td colspan="8"><button onclick="add_led()">Add LED</button></td>
-				<td colspan="8"><button onclick="clear_led()" style="width:75px">Clear</button></td>
+				<td colspan="4"><button onclick="add_led()">Add LED</button></td>
+				<td id="al"></td>
+				<td id="ac"></td>
+				<td id="ai"></td>
+				<td id="ae"></td>
+				<td><button onclick="clear_led()" style="width:75px">Clear</button></td>
 			</tr>
 		</table>
 
